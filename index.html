@@ -2,106 +2,215 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Coin Clicker</title>
     <style>
-        /* CSS – chiroyli va mobilga mos */
+        /* ===== GLOBAL ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         body {
             background: linear-gradient(145deg, #1a2634, #0f141a);
             min-height: 100vh;
+            min-height: 100dvh; /* dynamic viewport height (mobil brauzerlar uchun) */
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            padding: 16px;
+            font-family: 'Segoe UI', -apple-system, system-ui, sans-serif;
+            padding: 12px;
             touch-action: manipulation;
+            margin: 0;
         }
+
+        /* ===== KONTEYNER ===== */
         .container {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-radius: 48px;
-            padding: 30px 24px 40px;
-            max-width: 400px;
+            padding: 24px 20px 32px;
+            max-width: 420px;
             width: 100%;
             box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.08);
             text-align: center;
+            transition: all 0.2s;
+        }
+
+        /* ===== BALANS ===== */
+        .balance-label {
+            color: #8899aa;
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 500;
+            margin-bottom: 2px;
         }
         .balance {
             color: #f5c842;
-            font-size: 3rem;
+            font-size: clamp(2.6rem, 12vw, 3.8rem);
             font-weight: 700;
-            text-shadow: 0 0 20px rgba(245,200,66,0.3);
+            text-shadow: 0 0 30px rgba(245,200,66,0.25);
             letter-spacing: 1px;
-            margin-bottom: 6px;
-        }
-        .balance-label {
-            color: #8899aa;
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        .coin-icon {
-            font-size: 5rem;
-            margin: 16px 0 8px;
-            display: block;
+            line-height: 1.2;
             transition: transform 0.15s ease;
+            will-change: transform;
         }
-        .coin-icon:active {
-            transform: scale(0.92);
+
+        /* ===== TANGA ===== */
+        .coin-icon {
+            font-size: clamp(4.2rem, 16vw, 5.8rem);
+            margin: 10px 0 6px;
+            display: block;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: transform;
         }
+
+        /* ===== BOSISH TUGMASI ===== */
         .click-btn {
             background: radial-gradient(circle at 30% 30%, #f5c842, #e6a800);
             border: none;
-            width: 200px;
-            height: 200px;
+            width: min(200px, 60vw);
+            height: min(200px, 60vw);
             border-radius: 50%;
-            font-size: 4.5rem;
+            font-size: clamp(3.2rem, 13vw, 4.8rem);
             font-weight: bold;
             color: #1a1a2e;
-            box-shadow: 0 12px 0 #b38000, 0 20px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 12px 0 #b38000, 0 20px 35px rgba(0,0,0,0.5);
             transition: all 0.08s linear;
             cursor: pointer;
             touch-action: manipulation;
             display: inline-flex;
             justify-content: center;
             align-items: center;
-            margin: 10px 0 20px;
+            margin: 6px 0 14px;
+            position: relative;
+            will-change: transform;
         }
         .click-btn:active {
-            transform: translateY(8px);
+            transform: translateY(8px) scale(0.96);
             box-shadow: 0 4px 0 #b38000, 0 15px 25px rgba(0,0,0,0.4);
         }
+        .click-btn:disabled {
+            opacity: 0.6;
+            transform: translateY(4px);
+            box-shadow: 0 6px 0 #b38000;
+        }
+
+        /* ===== +1 COIN MATNI ===== */
         .per-click {
             color: #aabbcc;
-            font-size: 1.1rem;
+            font-size: clamp(0.85rem, 2.8vw, 1.1rem);
             background: rgba(255,255,255,0.06);
-            padding: 8px 18px;
+            padding: 6px 16px;
             border-radius: 40px;
             display: inline-block;
-            margin-top: 4px;
+            backdrop-filter: blur(4px);
         }
+
+        /* ===== HOLAT (STATUS) ===== */
         .status {
-            margin-top: 20px;
-            font-size: 0.9rem;
+            margin-top: 16px;
+            font-size: clamp(0.75rem, 2.4vw, 0.95rem);
             color: #88aa99;
-            min-height: 24px;
-            transition: color 0.2s;
+            min-height: 30px;
+            padding: 6px 16px;
+            border-radius: 40px;
+            display: inline-block;
+            backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
         }
         .status.success {
             color: #5fdc7a;
+            background: rgba(95,220,122,0.15);
         }
         .status.error {
             color: #ff6b6b;
+            background: rgba(255,107,107,0.15);
         }
-        @media (max-width: 480px) {
-            .click-btn { width: 160px; height: 160px; font-size: 3.5rem; }
-            .balance { font-size: 2.4rem; }
+        .status.loading {
+            color: #88aaff;
+            background: rgba(136,170,255,0.12);
+        }
+
+        /* ===== RIPPLE EFFEKTI ===== */
+        .tap-effect {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: scale(0);
+            animation: ripple 0.5s ease-out;
+            pointer-events: none;
+        }
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* ===== KICHIK EKRANLAR ( < 380px ) ===== */
+        @media (max-width: 380px) {
+            .container {
+                padding: 16px 12px 20px;
+                border-radius: 32px;
+            }
+            .click-btn {
+                width: min(150px, 55vw);
+                height: min(150px, 55vw);
+                font-size: 2.8rem;
+            }
+        }
+
+        /* ===== GORIZONTAL REJIM (telefon yonboshlaganda) ===== */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .container {
+                padding: 10px 16px 14px;
+                border-radius: 28px;
+                max-width: 340px;
+            }
+            .click-btn {
+                width: min(120px, 28vh);
+                height: min(120px, 28vh);
+                font-size: 2.4rem;
+                margin: 4px 0;
+            }
+            .coin-icon {
+                font-size: 2.6rem;
+                margin: 4px 0;
+            }
+            .balance {
+                font-size: 1.8rem;
+            }
+            .balance-label {
+                font-size: 0.7rem;
+            }
+            .status {
+                font-size: 0.7rem;
+                padding: 4px 12px;
+                margin-top: 8px;
+            }
+        }
+
+        /* ===== YENGIL REJIM (prefers-color-scheme: light) ===== */
+        @media (prefers-color-scheme: light) {
+            body {
+                background: linear-gradient(145deg, #e0e5ec, #c9d1d9);
+            }
+            .container {
+                background: rgba(255,255,255,0.6);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,0.5);
+            }
+            .balance-label { color: #4a5b6e; }
+            .per-click { color: #3a4a5e; background: rgba(0,0,0,0.04); }
+            .status { color: #3a4a5e; background: rgba(0,0,0,0.04); }
+            .status.success { color: #2a7a4a; background: rgba(42,122,74,0.08); }
+            .status.error { color: #b33; background: rgba(187,51,51,0.08); }
+            .status.loading { color: #3366aa; background: rgba(51,102,170,0.08); }
         }
     </style>
 </head>
@@ -109,26 +218,25 @@
     <div class="container">
         <div class="balance-label">💰 BALANS</div>
         <div class="balance" id="balanceDisplay">0</div>
-        
-        <span class="coin-icon">🪙</span>
+        <span class="coin-icon" id="coinIcon">🪙</span>
         <button class="click-btn" id="clickBtn">+</button>
-        
         <div class="per-click">+1 coin / bosish</div>
-        <div class="status" id="statusMsg">Kuting, ma'lumot yuklanmoqda...</div>
+        <div class="status" id="statusMsg">⏳ Yuklanmoqda...</div>
     </div>
 
     <script>
-        // JavaScript – asosiy logika
         (function() {
-            // Telegram WebApp obyekti (agar mavjud bo'lsa)
+            'use strict';
+
+            // ---- Telegram WebApp ----
             const tg = window.Telegram?.WebApp || null;
-            // Foydalanuvchi ID sini olish
             let userId = null;
+
             try {
                 if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
                     userId = tg.initDataUnsafe.user.id;
                 } else {
-                    // Test rejimi uchun (agar brauzerda ochsangiz)
+                    // Brauzerda test qilish uchun
                     userId = localStorage.getItem('demoUserId') || Math.floor(Math.random() * 1000000);
                     localStorage.setItem('demoUserId', userId);
                 }
@@ -136,25 +244,31 @@
                 userId = 'demo_' + Date.now();
             }
 
-            // DOM elementlar
+            // ---- DOM elementlari ----
             const balanceEl = document.getElementById('balanceDisplay');
             const clickBtn = document.getElementById('clickBtn');
             const statusEl = document.getElementById('statusMsg');
+            const coinIcon = document.getElementById('coinIcon');
 
-            // Backend API manzili – sizning botingizning URL si
-            // Bu yerda o'zingizning bot hosting manzilingizni qo'ying
-            const API_BASE = 'https://coinstar-bot.onrender.com'; // <-- O'ZGARTIRING!
+            // ---- API manzili (Render URL) ----
+            // ⚠️ O‘Z BOTINGIZ MANZILI BILAN ALMASHTIRING!
+            const API_BASE = 'https://coinstar-bot.onrender.com';
             const API_CLICK = `${API_BASE}/api/click`;
             const API_BALANCE = `${API_BASE}/api/balance`;
 
-            // Joriy balans (kesh)
+            // ---- State ----
             let currentBalance = 0;
             let isProcessing = false;
+            let intervalId = null;
 
-            // ------ Yordamchi funksiyalar ------
+            // ---- UI funksiyalari ----
             function updateBalanceUI(value) {
-                currentBalance = value;
-                balanceEl.textContent = Math.floor(value);
+                const num = Math.floor(value);
+                currentBalance = num;
+                balanceEl.textContent = num;
+                // Kichik animatsiya
+                balanceEl.style.transform = 'scale(1.1)';
+                setTimeout(() => balanceEl.style.transform = '', 150);
             }
 
             function setStatus(text, type = '') {
@@ -162,11 +276,37 @@
                 statusEl.className = 'status ' + (type || '');
             }
 
-            // ------ Serverdan balansni olish ------
+            // ---- Ripple effekti (tugma bosilganda to‘lqin) ----
+            function createRipple(e) {
+                const btn = e.currentTarget;
+                const rect = btn.getBoundingClientRect();
+                const size = Math.min(rect.width, rect.height) * 0.6;
+                // Ko‘chirish nuqtasini aniqlash (touch yoki mouse)
+                let clientX = e.clientX || (e.touches && e.touches[0]?.clientX);
+                let clientY = e.clientY || (e.touches && e.touches[0]?.clientY);
+                if (clientX === undefined) {
+                    clientX = rect.left + rect.width / 2;
+                    clientY = rect.top + rect.height / 2;
+                }
+                const x = clientX - rect.left - size / 2;
+                const y = clientY - rect.top - size / 2;
+
+                const ripple = document.createElement('span');
+                ripple.className = 'tap-effect';
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                btn.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 500);
+            }
+
+            // ---- Server so‘rovlari ----
             async function fetchBalance() {
                 try {
-                    const resp = await fetch(`${API_BALANCE}?user_id=${userId}`);
-                    if (!resp.ok) throw new Error('Server xatosi');
+                    const resp = await fetch(`${API_BALANCE}?user_id=${userId}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                     const data = await resp.json();
                     if (data.success) {
                         updateBalanceUI(data.balance);
@@ -176,15 +316,13 @@
                     }
                 } catch (err) {
                     console.warn('Balance fetch error:', err);
-                    setStatus('🔁 Server bilan bog‘lanib bo‘lmadi', 'error');
+                    setStatus('🔌 Tarmoq xatosi', 'error');
                 }
             }
 
-            // ------ Clickni yuborish ------
             async function sendClick() {
                 if (isProcessing) return;
                 isProcessing = true;
-                // Tugmani vaqtincha o'chirib qo'yamiz (oldini olish)
                 clickBtn.disabled = true;
 
                 try {
@@ -193,55 +331,70 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ user_id: userId, clicks: 1 })
                     });
-                    if (!resp.ok) throw new Error('Server javobi xato');
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                     const data = await resp.json();
                     if (data.success) {
                         updateBalanceUI(data.new_balance);
                         setStatus('➕ +1 coin!', 'success');
-                        // Tugmaga kichik vizual effekt
-                        clickBtn.style.transform = 'scale(0.9)';
+                        // Tugma animatsiyasi
+                        clickBtn.style.transform = 'scale(0.9) translateY(4px)';
                         setTimeout(() => clickBtn.style.transform = '', 100);
+                        // Tanga aylanishi
+                        coinIcon.style.transform = 'rotate(25deg) scale(0.9)';
+                        setTimeout(() => coinIcon.style.transform = '', 200);
                     } else {
                         setStatus('❌ ' + (data.message || 'Xatolik'), 'error');
                     }
                 } catch (err) {
                     console.warn('Click send error:', err);
-                    setStatus('🔌 Tarmoq xatosi, qayta urinib ko‘ring', 'error');
-                    // Xato bo'lsa, localda ham bir marta ko'paytirib qo'yamiz (lekin serverga yetmadi)
-                    // Bu faqat UX uchun, haqiqiy balans keyingi fetchda tiklanadi
+                    setStatus('🔌 Tarmoq xatosi', 'error');
                 } finally {
                     isProcessing = false;
                     clickBtn.disabled = false;
                 }
             }
 
-            // ------ Hodisalarni ulash ------
+            // ---- Hodisalarni ulash ----
             clickBtn.addEventListener('click', sendClick);
-            // Mobil qurilmalarda "touch" uchun ham (oldini olish)
-            clickBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // zoom yoki scroll bo'lmasin
+            clickBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault(); // skroll va zoom oldini olish
+                createRipple(e);
             }, { passive: false });
+            clickBtn.addEventListener('mousedown', createRipple);
 
-            // ------ Boshlang'ich yuklash ------
-            setStatus('⏳ Balans olinmoqda...');
+            // ---- Boshlash ----
+            setStatus('⏳ Yuklanmoqda...', 'loading');
             fetchBalance();
 
-            // Har 10 sekundda balansni yangilab turamiz (sinxronizatsiya)
-            setInterval(fetchBalance, 10000);
+            // Har 10 sekundda balans yangilanadi
+            intervalId = setInterval(fetchBalance, 10000);
 
-            // Agar Telegram WebApp bo'lsa, u tugaganda ushbu mini appni yopishga ruxsat
+            // ---- Telegram WebApp qo‘shimchalari ----
             if (tg) {
                 tg.ready();
-                // Back tugmasi bosilganda (agar mavjud bo'lsa)
-                tg.onEvent('backButtonClicked', () => {
+                // Orqaga tugma
+                tg.onEvent('backButtonClicked', function() {
                     tg.close();
                 });
+                // MainButton (ixtiyoriy) – “Yopish” tugmasi
+                if (tg.MainButton) {
+                    tg.MainButton.setText('Yopish');
+                    tg.MainButton.onClick(function() {
+                        tg.close();
+                    });
+                    tg.MainButton.show();
+                }
             }
 
-            // Xatoliklarni ushlash uchun global handler
-            window.addEventListener('unhandledrejection', (e) => {
+            // ---- Tozalash (sahifa yopilganda) ----
+            window.addEventListener('beforeunload', function() {
+                if (intervalId) clearInterval(intervalId);
+            });
+
+            // ---- Global xatoliklarni ushlash ----
+            window.addEventListener('unhandledrejection', function(e) {
                 console.warn('Unhandled rejection:', e.reason);
-                setStatus('⚠️ Kutilmagan xatolik', 'error');
+                setStatus('⚠️ Xatolik yuz berdi', 'error');
             });
 
         })();
