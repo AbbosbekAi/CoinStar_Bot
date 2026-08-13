@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Coin Clicker</title>
+    <style>
+        /* CSS – chiroyli va mobilga mos */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: linear-gradient(145deg, #1a2634, #0f141a);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 16px;
+            touch-action: manipulation;
+        }
+        .container {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(8px);
+            border-radius: 48px;
+            padding: 30px 24px 40px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.08);
+            text-align: center;
+        }
+        .balance {
+            color: #f5c842;
+            font-size: 3rem;
+            font-weight: 700;
+            text-shadow: 0 0 20px rgba(245,200,66,0.3);
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .balance-label {
+            color: #8899aa;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .coin-icon {
+            font-size: 5rem;
+            margin: 16px 0 8px;
+            display: block;
+            transition: transform 0.15s ease;
+        }
+        .coin-icon:active {
+            transform: scale(0.92);
+        }
+        .click-btn {
+            background: radial-gradient(circle at 30% 30%, #f5c842, #e6a800);
+            border: none;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            font-size: 4.5rem;
+            font-weight: bold;
+            color: #1a1a2e;
+            box-shadow: 0 12px 0 #b38000, 0 20px 30px rgba(0,0,0,0.5);
+            transition: all 0.08s linear;
+            cursor: pointer;
+            touch-action: manipulation;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0 20px;
+        }
+        .click-btn:active {
+            transform: translateY(8px);
+            box-shadow: 0 4px 0 #b38000, 0 15px 25px rgba(0,0,0,0.4);
+        }
+        .per-click {
+            color: #aabbcc;
+            font-size: 1.1rem;
+            background: rgba(255,255,255,0.06);
+            padding: 8px 18px;
+            border-radius: 40px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        .status {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #88aa99;
+            min-height: 24px;
+            transition: color 0.2s;
+        }
+        .status.success {
+            color: #5fdc7a;
+        }
+        .status.error {
+            color: #ff6b6b;
+        }
+        @media (max-width: 480px) {
+            .click-btn { width: 160px; height: 160px; font-size: 3.5rem; }
+            .balance { font-size: 2.4rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="balance-label">💰 BALANS</div>
+        <div class="balance" id="balanceDisplay">0</div>
+        
+        <span class="coin-icon">🪙</span>
+        <button class="click-btn" id="clickBtn">+</button>
+        
+        <div class="per-click">+1 coin / bosish</div>
+        <div class="status" id="statusMsg">Kuting, ma'lumot yuklanmoqda...</div>
+    </div>
+
+    <script>
+        // JavaScript – asosiy logika
+        (function() {
+            // Telegram WebApp obyekti (agar mavjud bo'lsa)
+            const tg = window.Telegram?.WebApp || null;
+            // Foydalanuvchi ID sini olish
+            let userId = null;
+            try {
+                if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    userId = tg.initDataUnsafe.user.id;
+                } else {
+                    // Test rejimi uchun (agar brauzerda ochsangiz)
+                    userId = localStorage.getItem('demoUserId') || Math.floor(Math.random() * 1000000);
+                    localStorage.setItem('demoUserId', userId);
+                }
+            } catch(e) {
+                userId = 'demo_' + Date.now();
+            }
+
+            // DOM elementlar
+            const balanceEl = document.getElementById('balanceDisplay');
+            const clickBtn = document.getElementById('clickBtn');
+            const statusEl = document.getElementById('statusMsg');
+
+            // Backend API manzili – sizning botingizning URL si
+            // Bu yerda o'zingizning bot hosting manzilingizni qo'ying
+            const API_BASE = 'https://sizning-botingiz.railway.app'; // <-- O'ZGARTIRING!
+            const API_CLICK = `${API_BASE}/api/click`;
+            const API_BALANCE = `${API_BASE}/api/balance`;
+
+            // Joriy balans (kesh)
+            let currentBalance = 0;
+            let isProcessing = false;
+
+            // ------ Yordamchi funksiyalar ------
+            function updateBalanceUI(value) {
+                currentBalance = value;
+                balanceEl.textContent = Math.floor(value);
+            }
+
+            function setStatus(text, type = '') {
+                statusEl.textContent = text;
+                statusEl.className = 'status ' + (type || '');
+            }
+
+            // ------ Serverdan balansni olish ------
+            async function fetchBalance() {
+                try {
+                    const resp = await fetch(`${API_BALANCE}?user_id=${userId}`);
+                    if (!resp.ok) throw new Error('Server xatosi');
+                    const data = await resp.json();
+                    if (data.success) {
+                        updateBalanceUI(data.balance);
+                        setStatus('✅ Balans yangilandi', 'success');
+                    } else {
+                        setStatus('⚠️ ' + (data.message || 'Xatolik'), 'error');
+                    }
+                } catch (err) {
+                    console.warn('Balance fetch error:', err);
+                    setStatus('🔁 Server bilan bog‘lanib bo‘lmadi', 'error');
+                }
+            }
+
+            // ------ Clickni yuborish ------
+            async function sendClick() {
+                if (isProcessing) return;
+                isProcessing = true;
+                // Tugmani vaqtincha o'chirib qo'yamiz (oldini olish)
+                clickBtn.disabled = true;
+
+                try {
+                    const resp = await fetch(API_CLICK, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userId, clicks: 1 })
+                    });
+                    if (!resp.ok) throw new Error('Server javobi xato');
+                    const data = await resp.json();
+                    if (data.success) {
+                        updateBalanceUI(data.new_balance);
+                        setStatus('➕ +1 coin!', 'success');
+                        // Tugmaga kichik vizual effekt
+                        clickBtn.style.transform = 'scale(0.9)';
+                        setTimeout(() => clickBtn.style.transform = '', 100);
+                    } else {
+                        setStatus('❌ ' + (data.message || 'Xatolik'), 'error');
+                    }
+                } catch (err) {
+                    console.warn('Click send error:', err);
+                    setStatus('🔌 Tarmoq xatosi, qayta urinib ko‘ring', 'error');
+                    // Xato bo'lsa, localda ham bir marta ko'paytirib qo'yamiz (lekin serverga yetmadi)
+                    // Bu faqat UX uchun, haqiqiy balans keyingi fetchda tiklanadi
+                } finally {
+                    isProcessing = false;
+                    clickBtn.disabled = false;
+                }
+            }
+
+            // ------ Hodisalarni ulash ------
+            clickBtn.addEventListener('click', sendClick);
+            // Mobil qurilmalarda "touch" uchun ham (oldini olish)
+            clickBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // zoom yoki scroll bo'lmasin
+            }, { passive: false });
+
+            // ------ Boshlang'ich yuklash ------
+            setStatus('⏳ Balans olinmoqda...');
+            fetchBalance();
+
+            // Har 10 sekundda balansni yangilab turamiz (sinxronizatsiya)
+            setInterval(fetchBalance, 10000);
+
+            // Agar Telegram WebApp bo'lsa, u tugaganda ushbu mini appni yopishga ruxsat
+            if (tg) {
+                tg.ready();
+                // Back tugmasi bosilganda (agar mavjud bo'lsa)
+                tg.onEvent('backButtonClicked', () => {
+                    tg.close();
+                });
+            }
+
+            // Xatoliklarni ushlash uchun global handler
+            window.addEventListener('unhandledrejection', (e) => {
+                console.warn('Unhandled rejection:', e.reason);
+                setStatus('⚠️ Kutilmagan xatolik', 'error');
+            });
+
+        })();
+    </script>
+</body>
+</html>
